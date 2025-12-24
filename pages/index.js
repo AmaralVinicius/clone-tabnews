@@ -3,9 +3,12 @@ function Home() {
   return (
     <h1 style={{
       padding: "1rem",
-      margin: "0"
+      margin: "0",
+      display: "flex",
+      flexDirection: "column"
     }}>
-      Hello, world! <a href="https://curso.dev" target="_blank">curso.dev</a>
+      Hello, world!
+      <a href="https://curso.dev" target="_blank">curso.dev</a>
     </h1>
   )
 }
