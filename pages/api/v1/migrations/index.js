@@ -7,7 +7,7 @@ const router = createRouter();
 router.get(getHandler);
 router.post(postHandler);
 
-export default router.handler(controller.er);
+export default router.handler(controller.errorHandlers);
 
 async function getHandler(req, res) {
   const pendingMigrations = await migrator.listPendingMigrations();
