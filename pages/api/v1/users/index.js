@@ -11,7 +11,11 @@ export default router.handler(controller.errorHandlers);
 async function postHandler(req, res) {
   const { username, email, password } = req.body;
 
-  const newUser = await user.create({ username, email, password });
+  const newUser = await user.create({
+    username,
+    email,
+    plainPassword: password,
+  });
 
   return res.status(201).json(newUser);
 }
