@@ -1,5 +1,7 @@
 import { version as uuidVersion } from "uuid";
 import orchestrator from "tests/orchestrator.js";
+import user from "models/user";
+import password from "models/password";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -31,7 +33,7 @@ describe("POST /api/v1/users", () => {
         id: responseBody.id,
         username: userData.username,
         email: userData.email,
-        password: userData.password,
+        password: responseBody.password,
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
@@ -39,6 +41,19 @@ describe("POST /api/v1/users", () => {
       expect(uuidVersion(responseBody.id)).toBe(4);
       expect(Date.parse(responseBody.created_at)).not.toBeNaN();
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+
+      const userInDatabase = await user.findOneByUsername(userData.username);
+      const correctPasswodMatch = await password.compare(
+        userData.password,
+        userInDatabase.password,
+      );
+      const incorrectPasswodMatch = await password.compare(
+        "incorrectPassword",
+        userInDatabase.password,
+      );
+
+      expect(correctPasswodMatch).toBe(true);
+      expect(incorrectPasswodMatch).toBe(false);
     });
     test("With duplicated 'email'", async () => {
       const userData1 = {
@@ -76,7 +91,7 @@ describe("POST /api/v1/users", () => {
       expect(response2Body).toEqual({
         name: "ValidationError",
         message: "The email address provided is already in use.",
-        action: "Use a different email address to sign up.",
+        action: "Use a different email address to do this operation.",
         status_code: 400,
       });
     });
@@ -116,7 +131,7 @@ describe("POST /api/v1/users", () => {
       expect(response2Body).toEqual({
         name: "ValidationError",
         message: "The username provided is already in use.",
-        action: "Use a different username to sign up.",
+        action: "Use a different username to do this operation.",
         status_code: 400,
       });
     });
