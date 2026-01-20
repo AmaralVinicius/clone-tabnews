@@ -83,7 +83,7 @@ describe("GET /api/v1/users/[username]", () => {
       expect(Date.parse(response2Body.created_at)).not.toBeNaN();
       expect(Date.parse(response2Body.updated_at)).not.toBeNaN();
     });
-    test("With nonexistent username", async () => {
+    test("With nonexistent 'username'", async () => {
       const usernameToFetch = "nonexistentuser";
 
       const response = await fetch(
