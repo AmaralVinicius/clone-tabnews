@@ -56,39 +56,45 @@ describe("POST /api/v1/users", () => {
       expect(incorrectPasswodMatch).toBe(false);
     });
     test("With duplicated 'email'", async () => {
-      const userData1 = {
+      const createdUserData = {
         username: "duplicatedemail1",
         email: "duplicated@email.com",
         password: "secretpassword",
       };
 
-      const response1 = await fetch("http://localhost:3000/api/v1/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const createdUserResponse = await fetch(
+        "http://localhost:3000/api/v1/users",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(createdUserData),
         },
-        body: JSON.stringify(userData1),
-      });
-      expect(response1.status).toBe(201);
+      );
+      expect(createdUserResponse.status).toBe(201);
 
-      const userData2 = {
+      const userToConflictData = {
         username: "duplicatedemail2",
         email: "Duplicated@email.com",
         password: "secretpassword",
       };
 
-      const response2 = await fetch("http://localhost:3000/api/v1/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const userToConflictResponse = await fetch(
+        "http://localhost:3000/api/v1/users",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userToConflictData),
         },
-        body: JSON.stringify(userData2),
-      });
-      expect(response2.status).toBe(400);
+      );
+      expect(userToConflictResponse.status).toBe(400);
 
-      const response2Body = await response2.json();
+      const userToConflictResponseBody = await userToConflictResponse.json();
 
-      expect(response2Body).toEqual({
+      expect(userToConflictResponseBody).toEqual({
         name: "ValidationError",
         message: "The email address provided is already in use.",
         action: "Use a different email address to do this operation.",
@@ -96,39 +102,45 @@ describe("POST /api/v1/users", () => {
       });
     });
     test("With duplicated 'username'", async () => {
-      const userData1 = {
+      const createdUserData = {
         username: "duplicatedusername",
         email: "username1@email.com",
         password: "secretpassword",
       };
 
-      const response1 = await fetch("http://localhost:3000/api/v1/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const createdUserResponse = await fetch(
+        "http://localhost:3000/api/v1/users",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(createdUserData),
         },
-        body: JSON.stringify(userData1),
-      });
-      expect(response1.status).toBe(201);
+      );
+      expect(createdUserResponse.status).toBe(201);
 
-      const userData2 = {
+      const userToConflictData = {
         username: "DuplicatedUsername",
         email: "username2@email.com",
         password: "secretpassword",
       };
 
-      const response2 = await fetch("http://localhost:3000/api/v1/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const userToConflictResponse = await fetch(
+        "http://localhost:3000/api/v1/users",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userToConflictData),
         },
-        body: JSON.stringify(userData2),
-      });
-      expect(response2.status).toBe(400);
+      );
+      expect(userToConflictResponse.status).toBe(400);
 
-      const response2Body = await response2.json();
+      const userToConflictResponseBody = await userToConflictResponse.json();
 
-      expect(response2Body).toEqual({
+      expect(userToConflictResponseBody).toEqual({
         name: "ValidationError",
         message: "The username provided is already in use.",
         action: "Use a different username to do this operation.",
