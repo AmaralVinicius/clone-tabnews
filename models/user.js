@@ -32,6 +32,36 @@ async function findOneByUsername(username) {
   }
 }
 
+async function findOneByEmail(email) {
+  const userFound = await runSelectQuery(email);
+  return userFound;
+
+  async function runSelectQuery(email) {
+    const results = await database.query({
+      text: `
+        SELECT 
+          *
+        FROM 
+          users
+        WHERE
+          LOWER(email) = LOWER($1)
+        LIMIT
+          1
+      ;`,
+      values: [email],
+    });
+
+    if (results.rowCount === 0) {
+      throw new NotFoundError({
+        message: "The email provided was not found.",
+        action: "Verify the provided email and try again.",
+      });
+    }
+
+    return results.rows[0];
+  }
+}
+
 async function create({ username, email, plainPassword }) {
   await validateUniqueUsername(username);
   await validateUniqueEmail(email);
@@ -161,6 +191,7 @@ async function hashPassword(plainPassword) {
 
 const user = {
   findOneByUsername,
+  findOneByEmail,
   create,
   update,
 };
