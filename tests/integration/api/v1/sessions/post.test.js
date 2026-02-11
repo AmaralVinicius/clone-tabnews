@@ -128,6 +128,11 @@ describe("POST /api/v1/sessions", () => {
       );
       expect(createSessionResponse.status).toBe(201);
 
+      const cacheControl = createSessionResponse.headers.get("Cache-Control");
+      expect(cacheControl).toBe(
+        "no-store, no-cache, max-age=0, must-revalidate",
+      );
+
       const createSessionResponseBody = await createSessionResponse.json();
 
       expect(createSessionResponseBody).toEqual({

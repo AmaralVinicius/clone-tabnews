@@ -18,5 +18,9 @@ async function getHandler(req, res) {
 
   controller.setSessionCookie(newSession.token, res);
 
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, max-age=0, must-revalidate",
+  );
   return res.status(200).json(userFound);
 }
