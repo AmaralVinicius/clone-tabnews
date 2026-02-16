@@ -81,11 +81,29 @@ describe("GET /api/v1/user", () => {
 
       const responseBody = await response.json();
 
+      const cacheControl = response.headers.get("Cache-Control");
+      expect(cacheControl).toBe(
+        "no-store, no-cache, max-age=0, must-revalidate",
+      );
+
       expect(responseBody).toEqual({
         name: "UnauthorizedError",
         message: "The user doesn't have an actived session.",
         action: "Check if the user is logged in and try again.",
         status_code: 401,
+      });
+
+      // Set-Cookie ssertions
+      const parsedSetCookie = setCookieParser(response, {
+        map: true,
+      });
+
+      expect(parsedSetCookie.sid).toEqual({
+        name: "sid",
+        value: "invalid",
+        maxAge: -1,
+        path: "/",
+        httpOnly: true,
       });
     });
     test("With expired session", async () => {
@@ -115,6 +133,24 @@ describe("GET /api/v1/user", () => {
         message: "The user doesn't have an actived session.",
         action: "Check if the user is logged in and try again.",
         status_code: 401,
+      });
+
+      const cacheControl = response.headers.get("Cache-Control");
+      expect(cacheControl).toBe(
+        "no-store, no-cache, max-age=0, must-revalidate",
+      );
+
+      // Set-Cookie ssertions
+      const parsedSetCookie = setCookieParser(response, {
+        map: true,
+      });
+
+      expect(parsedSetCookie.sid).toEqual({
+        name: "sid",
+        value: "invalid",
+        maxAge: -1,
+        path: "/",
+        httpOnly: true,
       });
     });
     test("With halfway-expired session", async () => {

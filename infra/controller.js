@@ -23,6 +23,9 @@ function onErrorHandler(error, req, res) {
   }
 
   if (error instanceof UnauthorizedError) {
+    if (req.cookies.sid) {
+      clearSessionCookie(res);
+    }
     return res.status(error.statusCode).json(error);
   }
 
@@ -45,12 +48,31 @@ function setSessionCookie(sessionToken, res) {
   res.setHeader("Set-Cookie", setCookie);
 }
 
+function clearSessionCookie(res) {
+  const setCookie = cookie.serialize("sid", "invalid", {
+    path: "/",
+    maxAge: -1,
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  });
+
+  res.setHeader("Set-Cookie", setCookie);
+
+  if (!res.getHeader("Cache-Control")) {
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, max-age=0, must-revalidate",
+    );
+  }
+}
+
 const controller = {
   errorHandlers: {
     onNoMatch: onNoMatchHandler,
     onError: onErrorHandler,
   },
   setSessionCookie,
+  clearSessionCookie,
 };
 
 export default controller;
