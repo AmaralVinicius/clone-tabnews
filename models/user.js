@@ -93,24 +93,31 @@ async function findOneByEmail(email) {
 }
 
 async function create({ username, email, plainPassword }) {
+  const defaultFeatures = ["read:activation_token"];
+
   await validateUniqueUsername(username);
   await validateUniqueEmail(email);
   const hashedPassword = await hashPassword(plainPassword);
 
-  const newUser = await runInsertQuery({ username, email, hashedPassword });
+  const newUser = await runInsertQuery({
+    username,
+    email,
+    hashedPassword,
+    features: defaultFeatures,
+  });
   return newUser;
 
-  async function runInsertQuery({ username, email, hashedPassword }) {
+  async function runInsertQuery({ username, email, hashedPassword, features }) {
     const result = await database.query({
       text: `
         INSERT INTO 
-          users (username, email, password)
+          users (username, email, password, features)
         VALUES 
-          ($1, LOWER($2), $3)
+          ($1, LOWER($2), $3, $4)
         RETURNING
           *
       ;`,
-      values: [username, email, hashedPassword],
+      values: [username, email, hashedPassword, features],
     });
 
     return result.rows[0];
