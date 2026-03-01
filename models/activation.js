@@ -27,35 +27,6 @@ async function create(userId) {
     return results.rows[0];
   }
 }
-async function findOneByUserId(userId) {
-  const tokenFound = await runSelectQuery(userId);
-  return tokenFound;
-
-  async function runSelectQuery(userId) {
-    const results = await database.query({
-      text: `
-        SELECT 
-          *
-        FROM 
-          user_activation_tokens
-        WHERE
-          user_id = $1
-        LIMIT
-          1
-      ;`,
-      values: [userId],
-    });
-
-    if (results.rowCount === 0) {
-      throw new NotFoundError({
-        message: "The id provided was not found.",
-        action: "Verify the provided id and try again.",
-      });
-    }
-
-    return results.rows[0];
-  }
-}
 
 async function sendEmailToUser(user, activationToken) {
   await email.send({
@@ -71,10 +42,42 @@ Equipe TabNews`,
   });
 }
 
+async function findOneValidById(activationTokenId) {
+  const sessionFound = await runSelectQuery(activationTokenId);
+  return sessionFound;
+
+  async function runSelectQuery(activationTokenId) {
+    const results = await database.query({
+      text: `
+        SELECT 
+          *
+        FROM 
+          user_activation_tokens
+        WHERE
+          id = $1
+          AND expires_at > NOW()
+          AND used_at IS NULL
+        LIMIT
+          1
+      ;`,
+      values: [activationTokenId],
+    });
+
+    if (results.rowCount === 0) {
+      throw new NotFoundError({
+        message: "The activation token was not found or has expired.",
+        action: "Please register again.",
+      });
+    }
+
+    return results.rows[0];
+  }
+}
+
 const activation = {
   create,
   sendEmailToUser,
-  findOneByUserId,
+  findOneValidById,
 };
 
 export default activation;
