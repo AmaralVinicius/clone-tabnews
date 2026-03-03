@@ -2,6 +2,7 @@ import orchestrator from "tests/orchestrator.js";
 import activation from "models/activation.js";
 import webserver from "infra/webserver.js";
 import user from "models/user.js";
+import { version as uuidVersion } from "uuid";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -13,6 +14,7 @@ beforeAll(async () => {
 describe("Use case: Registration Flow (All successful)", () => {
   let createUserResponseBody;
   let activationTokenId;
+  let createSessionResponseBody;
 
   test("Create user account", async () => {
     const createUserResponse = await fetch(
@@ -81,7 +83,7 @@ describe("Use case: Registration Flow (All successful)", () => {
     expect(Date.parse(activationResponseBody.used_at)).not.toBeNaN();
 
     const activatedUser = await user.findOneByUsername("RegistrationFlow");
-    expect(activatedUser.features).toEqual(["create:session"]);
+    expect(activatedUser.features).toEqual(["create:session", "read:session"]);
   });
 
   test("Login", async () => {
@@ -101,12 +103,35 @@ describe("Use case: Registration Flow (All successful)", () => {
 
     expect(createSessionResponse.status).toBe(201);
 
-    const createSessionResponseBody = createSessionResponse.json();
+    createSessionResponseBody = await createSessionResponse.json();
 
-    expect(createSessionResponseBody.user_id).toBe(
-      createUserResponseBody.user_id,
-    );
+    expect(createSessionResponseBody.user_id).toBe(createUserResponseBody.id);
   });
 
-  test("Get user information", async () => {});
+  test("Get user information", async () => {
+    const getUserInfoResponse = await fetch(
+      "http://localhost:3000/api/v1/user",
+      {
+        headers: {
+          Cookie: `sid=${createSessionResponseBody.token}`,
+        },
+      },
+    );
+    expect(getUserInfoResponse.status).toBe(200);
+
+    const getUserInfoResponseBody = await getUserInfoResponse.json();
+    expect(getUserInfoResponseBody).toEqual({
+      id: createUserResponseBody.id,
+      username: createUserResponseBody.username,
+      email: createUserResponseBody.email,
+      password: createUserResponseBody.password,
+      features: ["create:session", "read:session"],
+      created_at: createUserResponseBody.created_at,
+      updated_at: getUserInfoResponseBody.updated_at,
+    });
+
+    expect(uuidVersion(getUserInfoResponseBody.id)).toBe(4);
+    expect(Date.parse(getUserInfoResponseBody.created_at)).not.toBeNaN();
+    expect(Date.parse(getUserInfoResponseBody.updated_at)).not.toBeNaN();
+  });
 });

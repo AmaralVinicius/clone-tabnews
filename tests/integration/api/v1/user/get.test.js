@@ -16,6 +16,8 @@ describe("GET /api/v1/user", () => {
         username: "userWithValidSession",
       });
 
+      const activatedUser = await orchestrator.activateUser(createdUser);
+
       const sessionObject = await orchestrator.createSession(createdUser.id);
 
       const response = await fetch("http://localhost:3000/api/v1/user", {
@@ -32,13 +34,13 @@ describe("GET /api/v1/user", () => {
 
       const responseBody = await response.json();
       expect(responseBody).toEqual({
-        id: createdUser.id,
-        username: createdUser.username,
-        email: createdUser.email,
-        password: createdUser.password,
-        features: ["read:activation_token"],
-        created_at: createdUser.created_at.toISOString(),
-        updated_at: createdUser.updated_at.toISOString(),
+        id: activatedUser.id,
+        username: activatedUser.username,
+        email: activatedUser.email,
+        password: activatedUser.password,
+        features: ["create:session", "read:session"],
+        created_at: activatedUser.created_at.toISOString(),
+        updated_at: activatedUser.updated_at.toISOString(),
       });
 
       expect(uuidVersion(responseBody.id)).toBe(4);
@@ -163,6 +165,8 @@ describe("GET /api/v1/user", () => {
         username: "userWithHalfwayExpiredSession",
       });
 
+      const activatedUser = await orchestrator.activateUser(createdUser);
+
       const sessionObject = await orchestrator.createSession(createdUser.id);
 
       jest.useRealTimers();
@@ -177,13 +181,13 @@ describe("GET /api/v1/user", () => {
       const responseBody = await response.json();
 
       expect(responseBody).toEqual({
-        id: createdUser.id,
-        username: createdUser.username,
-        email: createdUser.email,
-        password: createdUser.password,
-        features: ["read:activation_token"],
-        created_at: createdUser.created_at.toISOString(),
-        updated_at: createdUser.updated_at.toISOString(),
+        id: activatedUser.id,
+        username: activatedUser.username,
+        email: activatedUser.email,
+        password: activatedUser.password,
+        features: ["create:session", "read:session"],
+        created_at: activatedUser.created_at.toISOString(),
+        updated_at: activatedUser.updated_at.toISOString(),
       });
 
       expect(uuidVersion(responseBody.id)).toBe(4);
