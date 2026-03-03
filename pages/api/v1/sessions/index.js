@@ -1,7 +1,10 @@
 import { createRouter } from "next-connect";
 import controller from "infra/controller.js";
 import authentication from "models/authentication.js";
+import authorization from "models/authorization.js";
 import session from "models/session.js";
+
+import { ForbiddenError } from "infra/errors.js";
 
 const router = createRouter();
 
@@ -18,6 +21,13 @@ async function postHandler(req, res) {
     email,
     plainPassword,
   });
+
+  if (!authorization.can(authenticatedUser, "create:session")) {
+    throw new ForbiddenError({
+      message: "You do not have permission to perform this action.",
+      action: "Check your permission level or if you are logged in .",
+    });
+  }
 
   const newSession = await session.create(authenticatedUser.id);
 
