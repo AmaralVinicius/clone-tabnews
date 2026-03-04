@@ -4,7 +4,8 @@ import activation from "models/activation.js";
 
 const router = createRouter();
 
-router.patch(patchHandler);
+router.use(controller.injectAnonymousOrUser);
+router.patch(controller.canRequest("read:activation_token"), patchHandler);
 
 export default router.handler(controller.errorHandlers);
 
@@ -14,11 +15,11 @@ async function patchHandler(req, res) {
   const validActivationToken =
     await activation.findOneValidById(activationTokenId);
 
+  await activation.activeUserByUserId(validActivationToken.user_id);
+
   const usedActivationToken = await activation.markTokenAsUsed(
     validActivationToken.id,
   );
-
-  await activation.activeUserByUserId(usedActivationToken.user_id);
 
   return res.status(200).json(usedActivationToken);
 }

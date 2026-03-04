@@ -1,8 +1,9 @@
 import email from "infra/email.js";
 import database from "infra/database.js";
 import webserver from "infra/webserver.js";
-import { NotFoundError } from "infra/errors.js";
+import { ForbiddenError, NotFoundError } from "infra/errors.js";
 import user from "models/user.js";
+import authorization from "./authorization.js";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 30 * 1000; // 30 Minutes
 
@@ -100,6 +101,15 @@ async function markTokenAsUsed(activationTokenId) {
 }
 
 async function activeUserByUserId(userId) {
+  const userToActivate = await user.findOneById(userId);
+
+  if (!authorization.can(userToActivate, "read:activation_token")) {
+    throw new ForbiddenError({
+      message: "The user cant perform this action.",
+      action: "Check if the user has the permission.",
+    });
+  }
+
   const activatedUser = await user.setFeatures(userId, [
     "create:session",
     "read:session",
@@ -113,6 +123,7 @@ const activation = {
   findOneValidById,
   markTokenAsUsed,
   activeUserByUserId,
+  EXPIRATION_IN_MILLISECONDS,
 };
 
 export default activation;

@@ -1,5 +1,5 @@
 export class InternalServerError extends Error {
-  constructor({ cause, statusCode }) {
+  constructor({ cause, statusCode } = {}) {
     super("An unexpected internal error occurs.", {
       cause,
     });
@@ -19,7 +19,7 @@ export class InternalServerError extends Error {
 }
 
 export class ServiceError extends Error {
-  constructor({ cause, message }) {
+  constructor({ cause, message } = {}) {
     super(message || "Service currently unavailable.", {
       cause,
     });
@@ -39,7 +39,7 @@ export class ServiceError extends Error {
 }
 
 export class ValidationError extends Error {
-  constructor({ cause, message, action }) {
+  constructor({ cause, message, action } = {}) {
     super(message || "A validation error happens.", {
       cause,
     });
@@ -59,7 +59,7 @@ export class ValidationError extends Error {
 }
 
 export class NotFoundError extends Error {
-  constructor({ cause, message, action }) {
+  constructor({ cause, message, action } = {}) {
     super(message || "Requested resource not found.", {
       cause: cause,
     });
@@ -79,7 +79,7 @@ export class NotFoundError extends Error {
 }
 
 export class UnauthorizedError extends Error {
-  constructor({ cause, message, action }) {
+  constructor({ cause, message, action } = {}) {
     super(message || "User not authenticated.", {
       cause: cause,
     });
@@ -118,7 +118,7 @@ export class MethodNotAllowedError extends Error {
 }
 
 export class ForbiddenError extends Error {
-  constructor({ cause, message, action }) {
+  constructor({ cause, message, action } = {}) {
     super(message || "Access denied.", {
       cause: cause,
     });

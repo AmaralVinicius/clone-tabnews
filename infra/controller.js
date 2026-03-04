@@ -111,8 +111,8 @@ function canRequest(feature) {
     }
 
     throw new ForbiddenError({
-      message: "You do not have permission to perform this action.",
-      action: "Check your permission level or if you are logged in .",
+      message: "Insufficient permissions to perform this action.",
+      action: "Verify your permissions or log in again.",
     });
   };
 }

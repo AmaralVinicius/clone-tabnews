@@ -24,8 +24,8 @@ async function postHandler(req, res) {
 
   if (!authorization.can(authenticatedUser, "create:session")) {
     throw new ForbiddenError({
-      message: "You do not have permission to perform this action.",
-      action: "Check your permission level or if you are logged in .",
+      message: "Account not activated.",
+      action: "Check your email for the activation link.",
     });
   }
 
