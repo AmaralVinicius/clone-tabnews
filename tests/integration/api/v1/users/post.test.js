@@ -149,4 +149,40 @@ describe("POST /api/v1/users", () => {
       });
     });
   });
+  describe("Default user", () => {
+    test("With unique and valid data", async () => {
+      const loggedUser = await orchestrator.createUser();
+      await orchestrator.activateUser(loggedUser);
+      const loggedUserSessionObject = await orchestrator.createSession(
+        loggedUser.id,
+      );
+
+      const createUserResponse = await fetch(
+        "http://localhost:3000/api/v1/users",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `sid=${loggedUserSessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: "loggedUser",
+            email: "loggeduser@curso.dev",
+            password: "loggedUserPassword",
+          }),
+        },
+      );
+
+      expect(createUserResponse.status).toBe(403);
+
+      const createUserResponseBody = await createUserResponse.json();
+
+      expect(createUserResponseBody).toEqual({
+        name: "ForbiddenError",
+        message: "Insufficient permissions to perform this action.",
+        action: "Verify your permissions or log in again.",
+        status_code: 403,
+      });
+    });
+  });
 });
