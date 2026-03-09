@@ -13,11 +13,17 @@ router.patch(controller.canRequest("update:user"), patchHandler);
 export default router.handler(controller.errorHandlers);
 
 async function getHandler(req, res) {
+  const userTryingToGet = req.context.user;
   const { username } = req.query;
-
   const userFound = await user.findOneByUsername(username);
 
-  return res.status(200).json(userFound);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToGet,
+    "read:user",
+    userFound,
+  );
+
+  return res.status(200).json(secureOutputValues);
 }
 
 async function patchHandler(req, res) {
@@ -40,5 +46,11 @@ async function patchHandler(req, res) {
     plainPassword: password,
   });
 
-  return res.status(200).json(updatedUser);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToPatch,
+    "read:user",
+    updatedUser,
+  );
+
+  return res.status(200).json(secureOutputValues);
 }

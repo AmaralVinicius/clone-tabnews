@@ -37,10 +37,18 @@ async function postHandler(req, res) {
     "Cache-Control",
     "no-store, no-cache, max-age=0, must-revalidate",
   );
-  return res.status(201).json(newSession);
+
+  const secureOutputValues = authorization.filterOutput(
+    authenticatedUser,
+    "read:session",
+    newSession,
+  );
+
+  return res.status(201).json(secureOutputValues);
 }
 
 async function deleteHandler(req, res) {
+  const userTryingToDelete = req.context.user;
   const sessionToken = req.cookies.sid;
 
   const sessionObject = await session.findOneValidByToken(sessionToken);
@@ -48,5 +56,11 @@ async function deleteHandler(req, res) {
 
   controller.clearSessionCookie(res);
 
-  return res.status(200).json(expiredSession);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToDelete,
+    "read:session",
+    expiredSession,
+  );
+
+  return res.status(200).json(secureOutputValues);
 }

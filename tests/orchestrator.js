@@ -1,5 +1,7 @@
 import retry from "async-retry";
 import { faker } from "@faker-js/faker";
+import { execSync } from "node:child_process";
+import { unlinkSync } from "node:fs";
 
 import database from "infra/database.js";
 import migrator from "models/migrator.js";
@@ -102,6 +104,19 @@ async function addFeaturesToUser(userObject, features) {
   return updatedUser;
 }
 
+function createTemporaryMigration() {
+  const output = execSync(
+    "npm run migrations:create -- temporary-test-migration",
+  ).toString();
+
+  const filePath = output.match(/Created migration -- (.+\.js)/)?.[1];
+  return filePath;
+}
+
+function deleteTemporaryMigration(filePath) {
+  unlinkSync(filePath);
+}
+
 const orchestrator = {
   waitForAllServices,
   clearDatabase,
@@ -113,6 +128,8 @@ const orchestrator = {
   extractUUID,
   activateUser,
   addFeaturesToUser,
+  createTemporaryMigration,
+  deleteTemporaryMigration,
 };
 
 export default orchestrator;
