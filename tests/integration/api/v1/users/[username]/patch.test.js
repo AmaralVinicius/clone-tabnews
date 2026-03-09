@@ -100,6 +100,37 @@ describe("PATCH /api/v1/users/[username]", () => {
         status_code: 400,
       });
     });
+    test("With one user targeting another one", async () => {
+      const createdUser = await orchestrator.createUser();
+      await orchestrator.activateUser(createdUser);
+      const createdUserSessionObject = await orchestrator.createSession(
+        createdUser.id,
+      );
+
+      const userToConflict = await orchestrator.createUser();
+
+      const response = await fetch(
+        `http://localhost:3000/api/v1/users/${userToConflict.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `sid=${createdUserSessionObject.token}`,
+          },
+          body: JSON.stringify({ username: "validUsername" }),
+        },
+      );
+      expect(response.status).toBe(403);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        action: "Verify your permissions or log in again.",
+        message: "Insufficient permissions to perform this action.",
+        name: "ForbiddenError",
+        status_code: 403,
+      });
+    });
     test("With duplicated 'email'", async () => {
       const createdUser = await orchestrator.createUser();
       await orchestrator.activateUser(createdUser);
