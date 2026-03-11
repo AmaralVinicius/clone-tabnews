@@ -10,11 +10,29 @@ beforeAll(async () => {
 });
 
 describe("GET /api/v1/user", () => {
+  describe("Anonymous user", () => {
+    test("Retrieving the endpoint", async () => {
+      const response = await fetch("http://localhost:3000/api/v1/user");
+      expect(response.status).toBe(403);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        name: "ForbiddenError",
+        message: "Insufficient permissions to perform this action.",
+        action: "Verify your permissions or log in again.",
+        status_code: 403,
+      });
+    });
+  });
+
   describe("Default User", () => {
     test("With valid session", async () => {
       const createdUser = await orchestrator.createUser({
         username: "userWithValidSession",
       });
+
+      const activatedUser = await orchestrator.activateUser(createdUser);
 
       const sessionObject = await orchestrator.createSession(createdUser.id);
 
@@ -32,12 +50,12 @@ describe("GET /api/v1/user", () => {
 
       const responseBody = await response.json();
       expect(responseBody).toEqual({
-        id: createdUser.id,
-        username: createdUser.username,
-        email: createdUser.email,
-        password: createdUser.password,
-        created_at: createdUser.created_at.toISOString(),
-        updated_at: createdUser.updated_at.toISOString(),
+        id: activatedUser.id,
+        username: activatedUser.username,
+        email: activatedUser.email,
+        features: ["create:session", "read:session", "update:user"],
+        created_at: activatedUser.created_at.toISOString(),
+        updated_at: activatedUser.updated_at.toISOString(),
       });
 
       expect(uuidVersion(responseBody.id)).toBe(4);
@@ -162,6 +180,8 @@ describe("GET /api/v1/user", () => {
         username: "userWithHalfwayExpiredSession",
       });
 
+      const activatedUser = await orchestrator.activateUser(createdUser);
+
       const sessionObject = await orchestrator.createSession(createdUser.id);
 
       jest.useRealTimers();
@@ -176,12 +196,12 @@ describe("GET /api/v1/user", () => {
       const responseBody = await response.json();
 
       expect(responseBody).toEqual({
-        id: createdUser.id,
-        username: createdUser.username,
-        email: createdUser.email,
-        password: createdUser.password,
-        created_at: createdUser.created_at.toISOString(),
-        updated_at: createdUser.updated_at.toISOString(),
+        id: activatedUser.id,
+        username: activatedUser.username,
+        email: activatedUser.email,
+        features: ["create:session", "read:session", "update:user"],
+        created_at: activatedUser.created_at.toISOString(),
+        updated_at: activatedUser.updated_at.toISOString(),
       });
 
       expect(uuidVersion(responseBody.id)).toBe(4);

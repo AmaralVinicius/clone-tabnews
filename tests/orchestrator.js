@@ -1,10 +1,13 @@
 import retry from "async-retry";
 import { faker } from "@faker-js/faker";
+import { execSync } from "node:child_process";
+import { unlinkSync } from "node:fs";
 
 import database from "infra/database.js";
 import migrator from "models/migrator.js";
 import user from "models/user.js";
 import session from "models/session.js";
+import activation from "models/activation.js";
 
 const EMAIL_HTTP_URL = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
 
@@ -51,7 +54,7 @@ async function runPendingMigrations() {
   await migrator.runPendingMigrations();
 }
 
-async function createUser({ username, email, password }) {
+async function createUser({ username, email, password } = {}) {
   return await user.create({
     username: username || faker.internet.username().replace(/[_.-]/g, ""),
     email: email || faker.internet.email(),
@@ -75,12 +78,43 @@ async function getLastEmail() {
 
   const lastEmailItem = emailListBody.pop();
 
+  if (!lastEmailItem) {
+    return null;
+  }
+
   const lastEmailTextReponse = await fetch(
     `${EMAIL_HTTP_URL}/messages/${lastEmailItem.id}.plain`,
   );
   const lastEmailTextBody = await lastEmailTextReponse.text();
 
   return { ...lastEmailItem, text: lastEmailTextBody };
+}
+
+function extractUUID(text) {
+  const match = text.match(/[0-9a-f-A-F-]{36}/);
+  return match ? match[0] : null;
+}
+
+async function activateUser(inactiveUser) {
+  return await activation.activeUserByUserId(inactiveUser.id);
+}
+
+async function addFeaturesToUser(userObject, features) {
+  const updatedUser = await user.addFeatures(userObject.id, features);
+  return updatedUser;
+}
+
+function createTemporaryMigration() {
+  const output = execSync(
+    "npm run migrations:create -- temporary-test-migration",
+  ).toString();
+
+  const filePath = output.match(/Created migration -- (.+\.js)/)?.[1];
+  return filePath;
+}
+
+function deleteTemporaryMigration(filePath) {
+  unlinkSync(filePath);
 }
 
 const orchestrator = {
@@ -91,6 +125,11 @@ const orchestrator = {
   createSession,
   deleteAllEmails,
   getLastEmail,
+  extractUUID,
+  activateUser,
+  addFeaturesToUser,
+  createTemporaryMigration,
+  deleteTemporaryMigration,
 };
 
 export default orchestrator;

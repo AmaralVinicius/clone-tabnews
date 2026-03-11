@@ -32,8 +32,7 @@ describe("POST /api/v1/users", () => {
       expect(responseBody).toEqual({
         id: responseBody.id,
         username: userData.username,
-        email: userData.email,
-        password: responseBody.password,
+        features: ["read:activation_token"],
         created_at: responseBody.created_at,
         updated_at: responseBody.updated_at,
       });
@@ -145,6 +144,42 @@ describe("POST /api/v1/users", () => {
         message: "The username provided is already in use.",
         action: "Use a different username to do this operation.",
         status_code: 400,
+      });
+    });
+  });
+  describe("Default user", () => {
+    test("With unique and valid data", async () => {
+      const loggedUser = await orchestrator.createUser();
+      await orchestrator.activateUser(loggedUser);
+      const loggedUserSessionObject = await orchestrator.createSession(
+        loggedUser.id,
+      );
+
+      const createUserResponse = await fetch(
+        "http://localhost:3000/api/v1/users",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `sid=${loggedUserSessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: "loggedUser",
+            email: "loggeduser@curso.dev",
+            password: "loggedUserPassword",
+          }),
+        },
+      );
+
+      expect(createUserResponse.status).toBe(403);
+
+      const createUserResponseBody = await createUserResponse.json();
+
+      expect(createUserResponseBody).toEqual({
+        name: "ForbiddenError",
+        message: "Insufficient permissions to perform this action.",
+        action: "Verify your permissions or log in again.",
+        status_code: 403,
       });
     });
   });
