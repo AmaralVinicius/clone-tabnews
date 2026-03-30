@@ -32,7 +32,7 @@ async function create(userId) {
 
 async function sendEmailToUser(user, activationToken) {
   await email.send({
-    from: "Curso.dev <contato@curso.dev>",
+    from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
     to: user.email,
     subject: "Ative seu cadastro no TabNews!",
     text: `Olá ${user.username}, clique no link abaixo para ativar seu cadastro no TabNews:
