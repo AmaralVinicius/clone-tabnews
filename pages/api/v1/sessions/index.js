@@ -1,11 +1,15 @@
 import { createRouter } from "next-connect";
 import controller from "infra/controller.js";
 import authentication from "models/authentication.js";
+import authorization from "models/authorization.js";
 import session from "models/session.js";
+
+import { ForbiddenError } from "infra/errors.js";
 
 const router = createRouter();
 
-router.post(postHandler);
+router.use(controller.injectAnonymousOrUser);
+router.post(controller.canRequest("create:session"), postHandler);
 router.delete(deleteHandler);
 
 export default router.handler(controller.errorHandlers);
@@ -18,6 +22,13 @@ async function postHandler(req, res) {
     plainPassword,
   });
 
+  if (!authorization.can(authenticatedUser, "create:session")) {
+    throw new ForbiddenError({
+      message: "Account not activated.",
+      action: "Check your email for the activation link.",
+    });
+  }
+
   const newSession = await session.create(authenticatedUser.id);
 
   controller.setSessionCookie(newSession.token, res);
@@ -26,10 +37,18 @@ async function postHandler(req, res) {
     "Cache-Control",
     "no-store, no-cache, max-age=0, must-revalidate",
   );
-  return res.status(201).json(newSession);
+
+  const secureOutputValues = authorization.filterOutput(
+    authenticatedUser,
+    "read:session",
+    newSession,
+  );
+
+  return res.status(201).json(secureOutputValues);
 }
 
 async function deleteHandler(req, res) {
+  const userTryingToDelete = req.context.user;
   const sessionToken = req.cookies.sid;
 
   const sessionObject = await session.findOneValidByToken(sessionToken);
@@ -37,5 +56,11 @@ async function deleteHandler(req, res) {
 
   controller.clearSessionCookie(res);
 
-  return res.status(200).json(expiredSession);
+  const secureOutputValues = authorization.filterOutput(
+    userTryingToDelete,
+    "read:session",
+    expiredSession,
+  );
+
+  return res.status(200).json(secureOutputValues);
 }
